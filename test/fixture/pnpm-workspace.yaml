@@ -1,3 +1,2 @@
 allowBuilds:
   cbor-extract: false
-pnpmfile: .pnpmfile.mjs

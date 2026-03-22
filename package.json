@@ -1,12 +1,17 @@
 {
-  "name": "pnpm-resolver-patchwork",
+  "name": "pnpm-plugin-patchwork",
   "version": "0.1.0",
   "description": "pnpm custom resolver/fetcher for patchwork (automerge) filesystem",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "pnpmfile.mjs",
+    "package.json"
+  ],
   "scripts": {
     "build": "tsc",
+    "build:bundle": "node esbuild.mjs",
     "test": "vitest run"
   },
   "dependencies": {
@@ -16,9 +21,10 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "pnpm": "11.0.0-alpha.11",
+    "esbuild": "^0.25.0",
+    "pnpm": "11.0.0-beta.2",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   },
-  "packageManager": "pnpm@11.0.0-alpha.11+sha512.9919e7e91d829bbaec5f357b6a9f8e8f20d6cc428c10f86f0fe39f9cd3ce271af71a382294a270fcb8885340f6a17b590ea795d4cde40eb3738149a65795db07"
+  "packageManager": "pnpm@11.0.0-beta.2+sha512.728d59d899a332fb79bfa2563010cc18c73f063044ca299c7465a76f406b7e8038b87ed6e140952c9b08943faab7e7e4172db0a10386f74601c3a72d068dfca2"
 }

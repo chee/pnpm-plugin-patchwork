@@ -52,7 +52,7 @@ export async function walkFolderTree(
       const content =
         fileDoc.content instanceof Uint8Array
           ? Buffer.from(fileDoc.content)
-          : Buffer.from(fileDoc.content, "utf-8")
+          : Buffer.from(String(fileDoc.content), "utf-8")
       files.push({
         path: entryPath,
         content,

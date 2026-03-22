@@ -54,9 +54,10 @@ export async function fetchWithCafs(
 
   try {
     const { filesIndex, manifest } = cafs.addFilesFromDir(packageDir)
+    // filesIndex is a Map<string, {filePath, ...}> — convert to Map<string, string>
     const filesMap = new Map<string, string>()
-    for (const [relativePath, entry] of Object.entries(filesIndex) as [string, any][]) {
-      filesMap.set(relativePath, entry.filePath)
+    for (const [relativePath, entry] of filesIndex) {
+      filesMap.set(relativePath, (entry as any).filePath)
     }
     return {
       filesMap,

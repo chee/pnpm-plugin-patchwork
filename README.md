@@ -1,4 +1,4 @@
-# pnpm-resolver-patchwork
+# pnpm-plugin-patchwork
 
 > **Warning**: chee has not read line 1 of this codebase. It was entirely written by the computer.
 
@@ -8,35 +8,18 @@ Specify dependencies as `automerge:<documentId>` in your `package.json` and pnpm
 
 ## Requirements
 
-- pnpm v11 (alpha.4+) — uses the top-level `resolvers`/`fetchers` plugin API
+- pnpm v11 (beta.2+) — uses the top-level `resolvers`/`fetchers` plugin API
 
 ## Setup
 
-1. Build the plugin:
-
-```sh
-pnpm install
-pnpm build
-```
-
-2. Create a `.pnpmfile.mjs` in your project root:
-
-```js
-import { createPnpmPlugin } from "pnpm-resolver-patchwork"
-
-const patchwork = createPnpmPlugin()
-
-export const resolvers = [...patchwork.resolvers]
-export const fetchers = [...patchwork.fetchers]
-```
-
-3. Point pnpm at it in your `pnpm-workspace.yaml`:
+1. Add `pnpm-plugin-patchwork` as a config dependency in your `pnpm-workspace.yaml`:
 
 ```yaml
-pnpmfile: .pnpmfile.mjs
+configDependencies:
+  pnpm-plugin-patchwork: "0.1.0"
 ```
 
-4. Add automerge dependencies to your `package.json`:
+2. Add automerge dependencies to your `package.json`:
 
 ```json
 {
@@ -46,7 +29,7 @@ pnpmfile: .pnpmfile.mjs
 }
 ```
 
-5. Run `pnpm install`.
+3. Run `pnpm install`.
 
 ## How it works
 
@@ -70,11 +53,20 @@ You can resolve a subfolder of a folder document as the package root:
 
 ## Configuration
 
-The sync server defaults to `wss://sync3.automerge.org`. You can change it when creating the plugin:
+The sync server defaults to `wss://sync3.automerge.org`. To use a different server, add a `pushwork.server` field to your `package.json`:
 
-```js
-const mod = await import("path/to/dist/index.js")
-const plugin = mod.createPnpmPlugin({ syncServerUrl: "wss://my-sync-server.example.com" })
+```json
+{
+  "pushwork": {
+    "server": "wss://my-sync-server.example.com"
+  }
+}
+```
+
+Or set the `PATCHWORK_SYNC_SERVER` environment variable (takes precedence):
+
+```sh
+PATCHWORK_SYNC_SERVER=wss://my-sync-server.example.com pnpm install
 ```
 
 ## Tests
