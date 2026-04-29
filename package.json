@@ -22,9 +22,9 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "esbuild": "^0.25.0",
-    "pnpm": "11.0.0-beta.2",
+    "pnpm": "11.0.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   },
-  "packageManager": "pnpm@11.0.0-beta.2+sha512.728d59d899a332fb79bfa2563010cc18c73f063044ca299c7465a76f406b7e8038b87ed6e140952c9b08943faab7e7e4172db0a10386f74601c3a72d068dfca2"
+  "packageManager": "pnpm@11.0.0+sha512.5bd187500e49cc6c3d891d973b432c02b844a5eb7209172c90a517a3ef4f579ed5c23d409b699e6a9dc418ff7b2b1890e63f6d74f1d3fc49848f37779c89c84c"
 }
