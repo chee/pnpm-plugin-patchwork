@@ -7,13 +7,40 @@ import type {
   FileEntry,
 } from "./types.js"
 
-const DEFAULT_SYNC_SERVER = "wss://sync3.automerge.org"
+export const DEFAULT_SYNC_SERVER = "wss://sync3.automerge.org"
+export const DEFAULT_SUBDUCTION_SERVER =
+  "wss://subduction.sync.inkandswitch.com"
 const DEFAULT_TIMEOUT_MS = 30_000
 
-export function createRepo(syncServerUrl?: string): Repo {
+let subductionReady = false
+
+async function ensureSubduction(): Promise<void> {
+  if (subductionReady) return
+  const mod: any = await import("@automerge/automerge-repo")
+  await mod.initSubduction()
+  subductionReady = true
+}
+
+export async function createRepo(opts?: {
+  syncServerUrl?: string
+  sub?: boolean
+}): Promise<Repo> {
+  await ensureSubduction()
+  const sub = opts?.sub !== false
+  if (sub) {
+    return new Repo({
+      subductionWebsocketEndpoints: [
+        opts?.syncServerUrl ?? DEFAULT_SUBDUCTION_SERVER,
+      ],
+      periodicSyncInterval: 0,
+      batchSyncInterval: 0,
+    } as any)
+  }
   return new Repo({
     network: [
-      new BrowserWebSocketClientAdapter(syncServerUrl ?? DEFAULT_SYNC_SERVER),
+      new BrowserWebSocketClientAdapter(
+        opts?.syncServerUrl ?? DEFAULT_SYNC_SERVER
+      ) as any,
     ],
   })
 }

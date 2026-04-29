@@ -5,11 +5,16 @@ import * as crypto from "node:crypto"
 import { execFile } from "node:child_process"
 import { promisify } from "node:util"
 import { createServer, type Server, type AddressInfo } from "node:http"
+import { readFileSync } from "node:fs"
 
 const exec = promisify(execFile)
 const FIXTURE_DIR = path.join(import.meta.dirname, "fixture")
 const PROJECT_ROOT = path.join(import.meta.dirname, "..")
 const PNPM = path.join(PROJECT_ROOT, "node_modules/.bin/pnpm")
+const PKG_VERSION = JSON.parse(
+  readFileSync(path.join(PROJECT_ROOT, "package.json"), "utf-8")
+).version as string
+const TARBALL_NAME = `pnpm-plugin-patchwork-${PKG_VERSION}.tgz`
 
 let registry: Server
 let registryPort: number
@@ -21,19 +26,14 @@ beforeAll(async () => {
     force: true,
   })
   await fs.rm(path.join(FIXTURE_DIR, "pnpm-lock.yaml"), { force: true })
-  await fs.rm(path.join(FIXTURE_DIR, "pnpm-plugin-patchwork-0.1.0.tgz"), {
-    force: true,
-  })
+  await fs.rm(path.join(FIXTURE_DIR, TARBALL_NAME), { force: true })
 
   // Pack the built project into a tarball
   await exec("pnpm", ["pack", "--pack-destination", FIXTURE_DIR], {
     cwd: PROJECT_ROOT,
   })
 
-  const tarballPath = path.join(
-    FIXTURE_DIR,
-    "pnpm-plugin-patchwork-0.1.0.tgz"
-  )
+  const tarballPath = path.join(FIXTURE_DIR, TARBALL_NAME)
   const tarballData = await fs.readFile(tarballPath)
 
   // Compute SHA512 integrity of the tarball
@@ -51,22 +51,21 @@ beforeAll(async () => {
       res.end(
         JSON.stringify({
           name: "pnpm-plugin-patchwork",
-          "dist-tags": { latest: "0.1.0" },
+          "dist-tags": { latest: PKG_VERSION },
           versions: {
-            "0.1.0": {
+            [PKG_VERSION]: {
               name: "pnpm-plugin-patchwork",
-              version: "0.1.0",
+              version: PKG_VERSION,
               dist: {
                 integrity,
-                tarball: `http://localhost:${registryPort}/pnpm-plugin-patchwork/-/pnpm-plugin-patchwork-0.1.0.tgz`,
+                tarball: `http://localhost:${registryPort}/pnpm-plugin-patchwork/-/${TARBALL_NAME}`,
               },
             },
           },
         })
       )
     } else if (
-      req.url ===
-      "/pnpm-plugin-patchwork/-/pnpm-plugin-patchwork-0.1.0.tgz"
+      req.url === `/pnpm-plugin-patchwork/-/${TARBALL_NAME}`
     ) {
       res.writeHead(200, { "Content-Type": "application/octet-stream" })
       res.end(tarballData)
@@ -105,7 +104,7 @@ beforeAll(async () => {
     path.join(FIXTURE_DIR, "pnpm-workspace.yaml"),
     [
       "configDependencies:",
-      `  pnpm-plugin-patchwork: "0.1.0+${integrity}"`,
+      `  pnpm-plugin-patchwork: "${PKG_VERSION}+${integrity}"`,
       "",
       "allowBuilds:",
       "  cbor-extract: false",
@@ -123,9 +122,7 @@ afterAll(async () => {
     force: true,
   })
   await fs.rm(path.join(FIXTURE_DIR, "pnpm-lock.yaml"), { force: true })
-  await fs.rm(path.join(FIXTURE_DIR, "pnpm-plugin-patchwork-0.1.0.tgz"), {
-    force: true,
-  })
+  await fs.rm(path.join(FIXTURE_DIR, TARBALL_NAME), { force: true })
   // Restore workspace yaml to avoid interfering with root pnpm commands
   await fs.writeFile(
     path.join(FIXTURE_DIR, "pnpm-workspace.yaml"),
@@ -146,7 +143,7 @@ describe("e2e: pnpm install", () => {
       {
         cwd: FIXTURE_DIR,
         timeout: 90_000,
-        env: { ...process.env, npm_config_yes: "true" },
+        env: { ...process.env, npm_config_yes: "true", PATCHWORK_SUB: "false" },
       }
     ).catch((err) => {
       const out = (err.stdout ?? "") + (err.stderr ?? "")

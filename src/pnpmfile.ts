@@ -2,26 +2,36 @@ import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import { createPnpmPlugin } from "./index.js"
 
-function readSyncServer(): string | undefined {
-  if (process.env.PATCHWORK_SYNC_SERVER) return process.env.PATCHWORK_SYNC_SERVER
+interface PatchworkConfig {
+  server?: string
+  sub?: boolean
+}
+
+function readPatchworkConfig(): PatchworkConfig {
   try {
-    const pkg = JSON.parse(readFileSync(join(process.cwd(), "package.json"), "utf-8"))
-    return pkg?.patchwork?.server
+    const pkg = JSON.parse(
+      readFileSync(join(process.cwd(), "package.json"), "utf-8")
+    )
+    return pkg?.patchwork ?? {}
   } catch {
-    return undefined
+    return {}
   }
 }
 
-// Lazy init: don't open the WebSocket connection until first use.
-// Debounced shutdown: close the connection after last use so the
-// process can exit cleanly once pnpm is done.
 let plugin: ReturnType<typeof createPnpmPlugin>
 let timer: ReturnType<typeof setTimeout>
 
 function ensurePlugin() {
-  if (!plugin) plugin = createPnpmPlugin({
-    syncServerUrl: readSyncServer(),
-  })
+  if (!plugin) {
+    const config = readPatchworkConfig()
+    const sub =
+      process.env.PATCHWORK_SUB !== undefined
+        ? process.env.PATCHWORK_SUB !== "false"
+        : config.sub !== false
+    const syncServerUrl =
+      process.env.PATCHWORK_SYNC_SERVER ?? config.server
+    plugin = createPnpmPlugin({ syncServerUrl, sub })
+  }
   clearTimeout(timer)
   timer = setTimeout(() => plugin.shutdown().catch(() => {}), 60_000)
   timer.unref()

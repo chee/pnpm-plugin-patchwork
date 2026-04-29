@@ -29,50 +29,89 @@ export interface PatchworkPlugin {
 
 export function createPatchworkPlugin(opts?: {
   syncServerUrl?: string
+  sub?: boolean
   repo?: Repo
 }): PatchworkPlugin {
-  const repo = opts?.repo ?? createRepo(opts?.syncServerUrl)
-  const isOwnedRepo = !opts?.repo
+  let repoPromise: Promise<Repo> | null = null
+
+  function getRepo(): Promise<Repo> {
+    if (opts?.repo) return Promise.resolve(opts.repo)
+    if (!repoPromise) {
+      repoPromise = createRepo({
+        syncServerUrl: opts?.syncServerUrl,
+        sub: opts?.sub,
+      })
+    }
+    return repoPromise
+  }
 
   return {
     resolvers: {
       canResolve,
-      resolve: (bareSpecifier: string) => resolve(bareSpecifier, repo),
+      resolve: async (bareSpecifier: string) => {
+        const repo = await getRepo()
+        return resolve(bareSpecifier, repo)
+      },
     },
     fetchers: {
       canFetch,
-      fetch: (resolution: AutomergeResolution) =>
-        fetchToDirectory(resolution, repo),
+      fetch: async (resolution: AutomergeResolution) => {
+        const repo = await getRepo()
+        return fetchToDirectory(resolution, repo)
+      },
     },
     shutdown: async () => {
-      if (isOwnedRepo) {
+      if (!opts?.repo && repoPromise) {
+        const repo = await repoPromise
         await repo.shutdown()
       }
     },
   }
 }
 
-export function createPnpmPlugin(opts?: { syncServerUrl?: string }) {
-  const repo = createRepo(opts?.syncServerUrl)
+export function createPnpmPlugin(opts?: {
+  syncServerUrl?: string
+  sub?: boolean
+}) {
+  let repoPromise: Promise<Repo> | null = null
+
+  function getRepo(): Promise<Repo> {
+    if (!repoPromise) {
+      repoPromise = createRepo({
+        syncServerUrl: opts?.syncServerUrl,
+        sub: opts?.sub,
+      })
+    }
+    return repoPromise
+  }
 
   return {
     resolvers: [
       {
         canResolve: (wantedDep: { bareSpecifier?: string }) =>
           canResolve(wantedDep.bareSpecifier ?? ""),
-        resolve: async (wantedDep: { bareSpecifier?: string }) =>
-          resolve(wantedDep.bareSpecifier!, repo),
+        resolve: async (wantedDep: { bareSpecifier?: string }) => {
+          const repo = await getRepo()
+          return resolve(wantedDep.bareSpecifier!, repo)
+        },
       },
     ],
     fetchers: [
       {
         canFetch: (_pkgId: string, resolution: { type?: string }) =>
           canFetch(_pkgId, resolution),
-        fetch: (cafs: any, resolution: any, fetchOpts: any, fetchers: any) =>
-          fetchWithCafs(cafs, resolution, fetchOpts, fetchers, repo),
+        fetch: async (cafs: any, resolution: any, fetchOpts: any, fetchers: any) => {
+          const repo = await getRepo()
+          return fetchWithCafs(cafs, resolution, fetchOpts, fetchers, repo)
+        },
       },
     ],
-    shutdown: () => repo.shutdown(),
+    shutdown: async () => {
+      if (repoPromise) {
+        const repo = await repoPromise
+        await repo.shutdown()
+      }
+    },
   }
 }
 
