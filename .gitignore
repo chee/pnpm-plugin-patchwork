@@ -2,3 +2,4 @@ node_modules
 dist
 test/fixture/node_modules
 test/fixture/pnpm-lock.yaml
+.claude/

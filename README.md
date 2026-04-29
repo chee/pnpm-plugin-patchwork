@@ -2,7 +2,7 @@
 
 > **Warning**: chee has not read line 1 of this codebase. It was entirely written by the computer.
 
-A pnpm custom resolver and fetcher for installing packages from a [patchwork](https://github.com/inkandswitch/pushwork) filesystem (automerge-repo).
+A pnpm custom resolver and fetcher for installing packages from a [patchwork](https://github.com/inkandswitch/patchwork) filesystem (automerge-repo).
 
 Specify dependencies as `automerge:<documentId>` in your `package.json` and pnpm will resolve and fetch them from the automerge sync server.
 
@@ -53,11 +53,11 @@ You can resolve a subfolder of a folder document as the package root:
 
 ## Configuration
 
-The sync server defaults to `wss://sync3.automerge.org`. To use a different server, add a `pushwork.server` field to your `package.json`:
+The sync server defaults to `wss://sync3.automerge.org`. To use a different server, add a `patchwork.server` field to your `package.json`:
 
 ```json
 {
-  "pushwork": {
+  "patchwork": {
     "server": "wss://my-sync-server.example.com"
   }
 }

@@ -20185,7 +20185,7 @@ function readSyncServer() {
   if (process.env.PATCHWORK_SYNC_SERVER) return process.env.PATCHWORK_SYNC_SERVER;
   try {
     const pkg = JSON.parse(readFileSync(join2(process.cwd(), "package.json"), "utf-8"));
-    return pkg?.pushwork?.server;
+    return pkg?.patchwork?.server;
   } catch {
     return void 0;
   }
